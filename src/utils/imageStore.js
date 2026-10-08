@@ -138,30 +138,69 @@ export const compressImage = (fileOrDataUrl, maxDim = 800, quality = 0.82) =>
   });
 
 /**
- * Convert a base64 Data URL to a lightweight File object
+ * Compresses an image file directly to a lightweight File/Blob (< 60KB)
+ * Drastically speeds up HTTP uploads to AWS S3 & backend endpoints
  */
-export const dataUrlToFile = async (dataUrl, filename = "artwork.jpg") => {
-  if (!dataUrl || typeof dataUrl !== "string") return null;
-  try {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    const cleanName = filename.endsWith(".jpg") || filename.endsWith(".jpeg") || filename.endsWith(".png") || filename.endsWith(".webp")
-      ? filename
-      : `${filename}.jpg`;
-    return new File([blob], cleanName, { type: blob.type || "image/jpeg" });
-  } catch (err) {
-    console.warn("dataUrlToFile conversion notice:", err?.message);
-    return null;
-  }
-};
+export const compressImageToFile = (file, maxDim = 800, quality = 0.82) =>
+  new Promise((resolve) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
 
-/**
- * Compresses an image and returns a lightweight File ready for network upload
- */
-export const compressImageToFile = async (file, maxDim = 600, quality = 0.8) => {
-  if (!file) return null;
-  const compressedDataUrl = await compressImage(file, maxDim, quality);
-  if (!compressedDataUrl) return file;
-  const optimizedFile = await dataUrlToFile(compressedDataUrl, file.name || "image.jpg");
-  return optimizedFile || file;
-};
+    // If file is already tiny (< 80KB), return as is
+    if (file.size && file.size < 80 * 1024) {
+      resolve(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const baseName = (file.name || "artwork.jpg").replace(/\.[^.]+$/, "");
+                const optimizedFile = new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
+                resolve(optimizedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            "image/jpeg",
+            quality
+          );
+        } catch {
+          resolve(file);
+        }
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+

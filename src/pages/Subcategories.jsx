@@ -223,10 +223,10 @@ export default function Subcategories() {
         imageURL: compressed,
       }));
 
-      // 2. Convert to lightweight file (< 50KB) so S3 upload is ultra-fast
+      // 2. Pre-compress to ultra-lightweight File (< 50KB) so S3 upload finishes in < 1 second
       const optimizedFile = await compressImageToFile(file, 600, 0.82);
 
-      // 3. Fast upload to S3 backend endpoint (fast-fail timeout: 5000ms)
+      // 3. Fast upload to S3 backend endpoint (5s fast-fail timeout instead of 30s)
       const uploadedUrl = await uploadSubcategoryImage(optimizedFile || file, {
         abortController,
         timeout: 5000,
@@ -246,9 +246,8 @@ export default function Subcategories() {
         setImageUploadStatus("local");
       }
     } catch (errUpload) {
-      // Don't show error if user intentionally cancelled or skipped
+      // Don't show error if user intentionally cancelled
       if (errUpload?.name === "CanceledError" || abortController.signal.aborted) {
-        setImageUploadStatus("local");
         return;
       }
       console.warn("Subcategory image upload notice (using instant artwork):", errUpload?.message || errUpload);

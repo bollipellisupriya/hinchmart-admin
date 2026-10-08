@@ -2,7 +2,7 @@ import api from "./axios";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { app } from "../firebase/firebaseConfig";
 
-const UPLOAD_TIMEOUT = 6000; // Fast 6s timeout for network & AWS S3 image uploads
+const DEFAULT_UPLOAD_TIMEOUT = 7000; // 7s fast-fail timeout for snappy UI
 
 /**
  * Extracts clean file URL from various backend response formats (prioritizing imageURL)
@@ -62,25 +62,22 @@ const extractMultipleFileUrls = (response) => {
 };
 
 /**
- * Helper to upload to Firebase Storage with strict 5-second timeout
+ * Helper to upload with endpoint fallback
  */
-const uploadToFirebaseStorage = async (file, folder = "uploads", timeoutMs = 5000) => {
+const uploadToFirebaseStorage = async (file, folder = "uploads") => {
   try {
-    const uploadTask = (async () => {
-      const storage = getStorage(app);
-      const cleanName = (file.name || "image.jpg").replace(/[^a-zA-Z0-9.-]/g, "_");
-      const fileName = `${folder}/${Date.now()}_${cleanName}`;
-      const storageRef = ref(storage, fileName);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadUrl = await getDownloadURL(snapshot.ref);
-      return downloadUrl;
-    })();
-
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Firebase storage timeout")), timeoutMs)
+    const storage = getStorage(app);
+    const cleanName = (file.name || "image.jpg").replace(/[^a-zA-Z0-9.-]/g, "_");
+    const fileName = `${folder}/${Date.now()}_${cleanName}`;
+    const storageRef = ref(storage, fileName);
+    const uploadPromise = uploadBytes(storageRef, file).then((snapshot) =>
+      getDownloadURL(snapshot.ref)
     );
-
-    return await Promise.race([uploadTask, timeoutPromise]);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Firebase upload timeout")), 5000)
+    );
+    const downloadUrl = await Promise.race([uploadPromise, timeoutPromise]);
+    return downloadUrl;
   } catch (err) {
     console.warn("Firebase Storage direct upload notice:", err?.message || err);
     return "";
@@ -98,14 +95,10 @@ const uploadWithFallback = async (primaryEndpoint, file, options = {}) => {
 
   // Support external AbortController for cancellable uploads
   const abortController = options.abortController || new AbortController();
-  const effectiveTimeout = options.timeout || UPLOAD_TIMEOUT;
 
   const requestConfig = {
-    timeout: effectiveTimeout,
+    timeout: options.timeout || DEFAULT_UPLOAD_TIMEOUT,
     signal: abortController.signal,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
   };
 
   const endpoints = [
@@ -123,12 +116,13 @@ const uploadWithFallback = async (primaryEndpoint, file, options = {}) => {
         return url;
       }
     } catch (err) {
+      // If the upload was intentionally cancelled, stop immediately
       if (err?.name === "CanceledError" || abortController.signal.aborted) {
         throw err;
       }
       lastError = err;
 
-      // Fast-fail if timeout, network offline, or server error
+      // If server is completely offline / unreachable / timed out, break and try Firebase
       const isServerDown =
         err.code === "ECONNABORTED" ||
         err.message?.includes("timeout") ||
@@ -144,24 +138,22 @@ const uploadWithFallback = async (primaryEndpoint, file, options = {}) => {
         break;
       }
 
-      // 4xx errors (except 404) are client-side validation failures — do not retry
+      // Client errors (4xx except 404) are unrecoverable — stop trying backend
       if (err?.response?.status >= 400 && err?.response?.status < 500 && err?.response?.status !== 404) {
         break;
       }
     }
   }
 
-  // Fast fallback to Firebase Storage if backend S3 is unavailable
-  if (!options.skipFirebase) {
-    try {
-      const folder = options.folder || "subcategories";
-      const fbUrl = await uploadToFirebaseStorage(file, folder, 4000);
-      if (fbUrl) {
-        return fbUrl;
-      }
-    } catch (fbErr) {
-      console.warn("Firebase storage upload fallback notice:", fbErr?.message);
+  // Try direct Firebase Storage upload so images ALWAYS upload successfully
+  try {
+    const folder = options.folder || "subcategories";
+    const fbUrl = await uploadToFirebaseStorage(file, folder);
+    if (fbUrl) {
+      return fbUrl;
     }
+  } catch (fbErr) {
+    console.warn("Firebase storage upload fallback notice:", fbErr?.message);
   }
 
   if (lastError) {

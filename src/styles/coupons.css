@@ -1,0 +1,745 @@
+/* ==========================================================================
+   HINCH-MART ENTERPRISE ADMIN CONSOLE - COUPONS & PROMOTIONS STYLESHEET
+   Luxury Ticket Cards, Perforated Notches, Presets & Live Dynamic Previews
+   ========================================================================== */
+
+.coupons-page {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* --------------------------------------------------------------------------
+   HEADER STATS GRID
+   -------------------------------------------------------------------------- */
+.coupon-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.coupon-stat-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.035);
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.coupon-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+.coupon-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.coupon-stat-icon.amber {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fef3c7;
+}
+
+.coupon-stat-icon.green {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #d1fae5;
+}
+
+.coupon-stat-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+}
+
+.coupon-stat-icon.purple {
+  background: #faf5ff;
+  color: #7c3aed;
+  border: 1px solid #f3e8ff;
+}
+
+.coupon-stat-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coupon-stat-details span {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.coupon-stat-details strong {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+/* --------------------------------------------------------------------------
+   TOOLBAR & FILTER CONTROLS
+   -------------------------------------------------------------------------- */
+.coupon-controls-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
+}
+
+.coupon-search-box {
+  position: relative;
+  min-width: 280px;
+  flex: 1;
+}
+
+.coupon-search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  transition: all 0.2s;
+}
+
+.coupon-search-box input:focus {
+  background: #ffffff;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  outline: none;
+}
+
+.coupon-search-box .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   LUXURY TICKET CARDS GRID (WITH PERFORATED NOTCH)
+   -------------------------------------------------------------------------- */
+.coupons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 18px;
+}
+
+.coupon-ticket-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.coupon-ticket-card:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+  transform: translateY(-3px);
+}
+
+.coupon-ticket-card.inactive {
+  background: #f8fafc;
+  opacity: 0.85;
+}
+
+.coupon-ticket-card.inactive .ticket-header {
+  background: linear-gradient(135deg, #334155, #1e293b);
+}
+
+.ticket-header {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  padding: 16px 20px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket-header.percentage-type {
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+}
+
+.ticket-header.fixed-type {
+  background: linear-gradient(135deg, #064e3b, #047857);
+}
+
+.ticket-code-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket-code-badge {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  border-radius: 8px;
+  color: #fef3c7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.ticket-copy-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transition: all 0.18s;
+}
+
+.ticket-copy-btn:hover {
+  background: #f59e0b;
+  color: #0f172a;
+  border-color: #f59e0b;
+  transform: scale(1.08);
+}
+
+.ticket-discount-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  letter-spacing: 0.4px;
+}
+
+/* Perforated Separator Line */
+.ticket-perforated-separator {
+  position: relative;
+  height: 20px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticket-perforated-separator::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  width: 20px;
+  height: 20px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  border-right: 1px solid #e2e8f0;
+  z-index: 2;
+}
+
+.ticket-perforated-separator::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  border-left: 1px solid #e2e8f0;
+  z-index: 2;
+}
+
+.perforated-dashed-line {
+  width: calc(100% - 40px);
+  border-top: 2px dashed #cbd5e1;
+}
+
+/* Ticket Body & Details */
+.ticket-body {
+  padding: 10px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.ticket-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.ticket-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+
+.ticket-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.ticket-spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ticket-spec-item span {
+  color: #94a3b8;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ticket-spec-item strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+/* Progress Usage Bar */
+.ticket-usage-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-usage-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.ticket-usage-header span {
+  color: #64748b;
+}
+
+.ticket-usage-header strong {
+  color: #0f172a;
+}
+
+.ticket-progress-track {
+  width: 100%;
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ticket-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.ticket-progress-fill.full {
+  background: #ef4444;
+}
+
+/* Ticket Footer Actions */
+.ticket-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticket-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-ticket-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 11px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  gap: 5px;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-ticket-action:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn-ticket-action.primary {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.btn-ticket-action.primary:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.btn-ticket-action.danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-ticket-action.danger:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* --------------------------------------------------------------------------
+   LIVE TICKET PREVIEW IN MODAL
+   -------------------------------------------------------------------------- */
+.coupon-live-preview-box {
+  padding: 18px;
+  background: linear-gradient(135deg, #0b1120, #0f172a);
+  border-radius: 14px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid #1e293b;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.preview-ticket-visual {
+  position: relative;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 2px dashed #f59e0b;
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.preview-ticket-badge {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+  letter-spacing: 0.5px;
+}
+
+/* Quick Preset Chips */
+.coupon-preset-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.preset-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.preset-chip-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.preset-chip-btn.active {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+/* --------------------------------------------------------------------------
+   FORM SECTIONS & FIELD WRAPPERS IN MODAL
+   -------------------------------------------------------------------------- */
+.form-section-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+}
+
+.section-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.section-card-title svg {
+  color: #f59e0b;
+}
+
+.luxury-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.input-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-field-wrap.full-width {
+  grid-column: span 2;
+}
+
+.input-field-wrap label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.input-field-wrap input,
+.input-field-wrap select,
+.input-field-wrap textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #f8fafc;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.input-field-wrap input:focus,
+.input-field-wrap select:focus,
+.input-field-wrap textarea:focus {
+  background: #ffffff;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  outline: none;
+}
+
+.input-field-wrap input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.input-with-action {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-action input {
+  flex: 1;
+}
+
+.btn-inline-action {
+  padding: 0 14px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-inline-action:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Custom Checkbox Toggle Switch */
+.custom-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.15s;
+}
+
+.custom-switch-label:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.custom-switch-label.active {
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+
+.switch-toggle-box {
+  width: 36px;
+  height: 20px;
+  background: #cbd5e1;
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.switch-toggle-box::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.custom-switch-label.active .switch-toggle-box {
+  background: #f59e0b;
+}
+
+.custom-switch-label.active .switch-toggle-box::after {
+  transform: translateX(16px);
+}
+
+/* Usages Table & Audit History Drawer */
+.usages-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 12.5px;
+}
+
+.usages-history-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.usages-history-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.usages-history-table tr:hover td {
+  background: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .coupon-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .coupons-grid {
+    grid-template-columns: 1fr;
+  }
+  .luxury-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .input-field-wrap.full-width {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 540px) {
+  .coupon-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

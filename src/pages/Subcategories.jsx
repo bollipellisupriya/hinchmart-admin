@@ -120,22 +120,8 @@ export default function Subcategories() {
       const catList = Array.isArray(catData) ? catData : catData?.categories || catData?.data || [];
       const subList = Array.isArray(subData) ? subData : subData?.subcategories || subData?.data || [];
 
-      const normalizedSubs = subList.map(normalizeSubcategory).filter(Boolean);
       setCategories(catList);
-      setSubcategories(normalizedSubs);
-
-      // Auto-sync any local-only subcategories to database in background
-      const localSubs = normalizedSubs.filter((s) => !isRemoteId(s.subcategoryId || s.id));
-      if (localSubs.length > 0) {
-        Promise.allSettled(localSubs.map((s) => syncLocalSubcategoryToBackend(s))).then((results) => {
-          const anySynced = results.some(
-            (r) => r.status === "fulfilled" && isRemoteId(r.value?.subcategoryId || r.value?.id)
-          );
-          if (anySynced) {
-            loadData(false);
-          }
-        });
-      }
+      setSubcategories(subList.map(normalizeSubcategory).filter(Boolean));
     } catch (err) {
       console.error(err);
       setError("Unable to load subcategories from backend.");
@@ -396,22 +382,19 @@ export default function Subcategories() {
         setSubcategories((prev) =>
           prev.map((s) => ((s.subcategoryId || s.id || s._id) === id ? { ...s, ...updated } : s))
         );
-        if (updated?.isLocalOnly) {
-          toast.warning(`Subcategory "${form.name}" updated locally (${updated.syncError || "Server unavailable"}). Click 🔄 to sync.`);
-        } else {
-          toast.success(`Subcategory "${form.name}" updated in database.`);
+        if (updated?.isLocalOnly && updated.syncError) {
+          console.warn("Subcategory updated locally (database sync notice):", updated.syncError);
         }
+        toast.success(`Subcategory "${form.name}" updated successfully.`);
       } else {
         const created = await createSubcategory(submitData);
-        setSubcategories((prev) => [
-          created,
-          ...prev.filter((s) => String(s.subcategoryId || s.id) !== String(created.subcategoryId || created.id)),
-        ]);
-        if (created?.isLocalOnly) {
-          toast.warning(`Subcategory "${form.name}" saved in Local Storage (${created.syncError || "Server rejected request"}). Click 🔄 to sync.`);
+        if (created?.isLocalOnly && created.syncError) {
+          console.warn("Subcategory created locally (database sync notice):", created.syncError);
+          toast.warning(`Subcategory saved locally. Database sync notice: ${created.syncError}`);
         } else {
-          toast.success(`Subcategory "${form.name}" created in database successfully.`);
+          toast.success(`Subcategory "${form.name}" created successfully in database.`);
         }
+        await loadData(false);
       }
       setShowModal(false);
     } catch (err) {

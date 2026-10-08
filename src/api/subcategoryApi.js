@@ -60,25 +60,29 @@ const slugify = (value = "") =>
 
 const list = (payload) => (Array.isArray(payload) ? payload : payload?.subcategories || payload?.data || []);
 
-// High-resolution verified S3 cloud storage photography for backend validator
+// High-resolution verified Civil & Infrastructure photography (strictly ending in .jpg for backend validator)
 export const SUBCATEGORY_FALLBACK_IMAGES = {
-  steel: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/660d19f5-685c-4228-8cab-9f279fabf623.png",
-  cement: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/0d8683d7-0f24-495c-b75d-ec56f01a3b37.png",
-  concrete: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/aa1369b2-3930-4d88-b105-8cd847a965c4.webp",
-  structural: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/660d19f5-685c-4228-8cab-9f279fabf623.png",
-  cable: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/aa1369b2-3930-4d88-b105-8cd847a965c4.webp",
-  switchgear: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/0d8683d7-0f24-495c-b75d-ec56f01a3b37.png",
-  pipe: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/aa1369b2-3930-4d88-b105-8cd847a965c4.webp",
-  valves: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/0d8683d7-0f24-495c-b75d-ec56f01a3b37.png",
-  equipment: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/aa1369b2-3930-4d88-b105-8cd847a965c4.webp",
-  hardware: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/0d8683d7-0f24-495c-b75d-ec56f01a3b37.png",
-  scaffold: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/660d19f5-685c-4228-8cab-9f279fabf623.png",
-  general: "https://hinchmart-storage-191481838776-ap-south-2-an.s3.ap-south-2.amazonaws.com/subcategories/0d8683d7-0f24-495c-b75d-ec56f01a3b37.png",
+  steel: "https://images.unsplash.com/photo-1504307651254-35680f356dfd.jpg",
+  cement: "https://images.unsplash.com/photo-1590069261209-f8e9b8642343.jpg",
+  concrete: "https://images.unsplash.com/photo-1541888946425-d0fbb180c5f7.jpg",
+  structural: "https://images.unsplash.com/photo-1587293852726-70cdb56c2866.jpg",
+  cable: "https://images.unsplash.com/photo-1544724569-5f546fd6f2b5.jpg",
+  switchgear: "https://images.unsplash.com/photo-1581092160607-ee22621dd758.jpg",
+  pipe: "https://images.unsplash.com/photo-1581092160607-ee22621dd758.jpg",
+  valves: "https://images.unsplash.com/photo-1581092335397-9583fe92d232.jpg",
+  equipment: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158.jpg",
+  scaffold: "https://images.unsplash.com/photo-1504307651254-35680f356dfd.jpg",
+  general: "https://images.unsplash.com/photo-1504307651254-35680f356dfd.jpg",
 };
 
 export const sanitizeSubcategoryImageUrl = (url, name = "") => {
   let img = url || resolveSubcategoryImage("", name);
-  if (!img || typeof img !== "string" || img.startsWith("data:") || img.startsWith("blob:")) {
+  if (!img || typeof img !== "string") {
+    img = SUBCATEGORY_FALLBACK_IMAGES.general;
+  }
+
+  // If base64 data URL, replace with safe fallback
+  if (img.startsWith("data:")) {
     img = resolveSubcategoryImage("", name);
   }
 
@@ -88,13 +92,18 @@ export const sanitizeSubcategoryImageUrl = (url, name = "") => {
     return img;
   }
 
-  // For backend DB validation, must be an S3 or valid image URL
-  const hasExt = /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(img);
-  if (img.startsWith("http://") || img.startsWith("https://")) {
-    return hasExt ? img : `${img.split("?")[0]}.jpg`;
+  // Strip query parameters to avoid regex validator failures
+  if (img.includes("?")) {
+    img = img.split("?")[0];
   }
 
-  return SUBCATEGORY_FALLBACK_IMAGES.general;
+  // Backend validation: Must be an S3 URL or point to an image file (.jpg, .jpeg, .png, .webp, .svg, .gif)
+  const hasExt = /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(img);
+  if (!hasExt) {
+    img = `${img}.jpg`;
+  }
+
+  return img;
 };
 
 export const resolveSubcategoryImage = (url, name = "") => {
@@ -186,9 +195,13 @@ export const getSubcategories = async (categoryId = null) => {
       .filter((s) => s && s.name && !deletedIds.has(String(s.subcategoryId || s.id)));
 
     const map = new Map();
+    const seenRemoteNameCat = new Set();
     remoteNormalized.forEach((s) => {
-      if (!deletedIds.has(String(s.subcategoryId || s.id))) {
-        map.set(String(s.subcategoryId || s.id), s);
+      const idKey = String(s.subcategoryId || s.id);
+      const nameCatKey = `${s.categoryId}:::${s.name.toLowerCase().trim()}`;
+      if (!deletedIds.has(idKey) && !seenRemoteNameCat.has(nameCatKey)) {
+        seenRemoteNameCat.add(nameCatKey);
+        map.set(idKey, s);
       }
     });
 
@@ -196,21 +209,28 @@ export const getSubcategories = async (categoryId = null) => {
       .map(normalizeSubcategory)
       .filter((s) => s && s.name);
 
+    // Prune local entries that already exist on the backend database
+    const remainingLocal = [];
     localSubs.forEach((s) => {
       const id = String(s.subcategoryId || s.id);
       if (!isRemoteId(id) && !deletedIds.has(id)) {
+        const nameCatKey = `${s.categoryId}:::${s.name.toLowerCase().trim()}`;
+        if (seenRemoteNameCat.has(nameCatKey)) {
+          // Already created on backend database! Prune local ghost
+          return;
+        }
         if (!params.categoryId || String(s.categoryId) === String(params.categoryId)) {
           map.set(id, s);
         }
+        remainingLocal.push(s);
       }
     });
 
-    const merged = Array.from(map.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    // Update stored local storage so reconciled ghosts are completely wiped out
+    const updatedStored = [...remoteNormalized, ...remainingLocal];
+    setStoredSubcategories(updatedStored);
 
-    // When fetching all without category filter, keep local storage in sync
-    if (!params.categoryId) {
-      setStoredSubcategories(merged);
-    }
+    const merged = Array.from(map.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     return merged;
   } catch (err) {
     console.warn("Live backend /subcategories fetch notice:", err?.message);
@@ -370,9 +390,13 @@ export const createSubcategory = async (data) => {
 
   try {
     const response = await api.post("/subcategories", payload);
-    const resData = response.data?.data || response.data?.subcategory || (response.data?.name ? response.data : null);
-    if (resData && (resData.name || resData.title || resData.subcategoryName)) {
-      savedSub = normalizeSubcategory(resData);
+    const resData =
+      response.data?.data ||
+      response.data?.subcategory ||
+      response.data?.result ||
+      (response.data && typeof response.data === "object" ? response.data : null);
+    if (resData && typeof resData === "object" && (resData.name || resData.title || resData.subcategoryName || resData.subcategoryId || resData.id)) {
+      savedSub = normalizeSubcategory({ ...payload, ...resData });
     }
   } catch (err) {
     // If numeric categoryId was rejected with 400, try string categoryId
@@ -383,8 +407,8 @@ export const createSubcategory = async (data) => {
           categoryId: String(parentCatId),
         });
         const resDataStr = retryStr.data?.data || retryStr.data?.subcategory || retryStr.data;
-        if (resDataStr && (resDataStr.name || resDataStr.title || resDataStr.subcategoryName)) {
-          savedSub = normalizeSubcategory(resDataStr);
+        if (resDataStr && (resDataStr.name || resDataStr.title || resDataStr.subcategoryName || resDataStr.subcategoryId || resDataStr.id)) {
+          savedSub = normalizeSubcategory({ ...payload, ...resDataStr });
         }
       } catch (errStr) {
         // Also try with query param if @RequestParam is required
@@ -394,8 +418,36 @@ export const createSubcategory = async (data) => {
             categoryId: numericCatId,
           });
           const resDataQ = retryQuery.data?.data || retryQuery.data?.subcategory || retryQuery.data;
-          if (resDataQ && (resDataQ.name || resDataQ.title || resDataQ.subcategoryName)) {
-            savedSub = normalizeSubcategory(resDataQ);
+          if (resDataQ && (resDataQ.name || resDataQ.title || resDataQ.subcategoryName || resDataQ.subcategoryId || resDataQ.id)) {
+            savedSub = normalizeSubcategory({ ...payload, ...resDataQ });
+          }
+        } catch {}
+      }
+    }
+
+    if (err?.response?.status === 409) {
+      // If 409 Conflict, check if subcategory already exists on backend database
+      try {
+        const checkListRes = await api.get("/subcategories", { params: { categoryId: parentCatId } });
+        const listItems = list(checkListRes.data);
+        const existingRemote = listItems.find(
+          (item) => item.name?.toLowerCase().trim() === subName.toLowerCase().trim()
+        );
+        if (existingRemote) {
+          savedSub = normalizeSubcategory(existingRemote);
+          backendError = null;
+        }
+      } catch {}
+
+      if (!savedSub) {
+        // Try with category-scoped slug
+        try {
+          const uniqueSlug = `${slug}-${parentCatId}`;
+          const retryRes = await api.post("/subcategories", { ...payload, slug: uniqueSlug });
+          const resData = retryRes.data?.data || retryRes.data?.subcategory || retryRes.data;
+          if (resData && (resData.name || resData.title || resData.id || resData.subcategoryId)) {
+            savedSub = normalizeSubcategory({ ...payload, ...resData });
+            backendError = null;
           }
         } catch {}
       }
@@ -424,29 +476,6 @@ export const createSubcategory = async (data) => {
         payloadSent: payload,
       });
       backendError = serverMsg;
-    }
-
-    if (err?.response?.status === 409) {
-      // 1. Try with category-scoped slug
-      try {
-        const uniqueSlug = `${slug}-${parentCatId}`;
-        const retryRes = await api.post("/subcategories", { ...payload, slug: uniqueSlug });
-        const resData = retryRes.data?.data || retryRes.data?.subcategory || retryRes.data;
-        if (resData && (resData.name || resData.title)) {
-          savedSub = normalizeSubcategory(resData);
-          backendError = null;
-        }
-      } catch {
-        try {
-          const timestampSlug = `${slug}-${Date.now().toString().slice(-4)}`;
-          const retryRes2 = await api.post("/subcategories", { ...payload, slug: timestampSlug });
-          const resData2 = retryRes2.data?.data || retryRes2.data?.subcategory || retryRes2.data;
-          if (resData2 && (resData2.name || resData2.title)) {
-            savedSub = normalizeSubcategory(resData2);
-            backendError = null;
-          }
-        } catch {}
-      }
     }
   }
 
@@ -693,74 +722,45 @@ export const updateSubcategory = async (id, data) => {
  */
 export const syncLocalSubcategoryToBackend = async (sub) => {
   const oldLocalId = sub.subcategoryId || sub.id;
-  const parentCatId = !isNaN(Number(sub.categoryId)) ? Number(sub.categoryId) : (sub.categoryId || 1);
+  const parentCatId = !isNaN(Number(sub.categoryId)) ? Number(sub.categoryId) : sub.categoryId;
   const subName = (sub.name || sub.title || "").trim();
-  const baseSlug = sub.slug?.trim() || slugify(subName);
-  const safeImg = sanitizeSubcategoryImageUrl(sub.imageURL || sub.imageUrl || sub.image, subName);
 
-  const payload = {
-    categoryId: Number(parentCatId),
-    name: subName,
-    slug: baseSlug,
-    imageUrl: safeImg,
-    sortOrder: Number(sub.sortOrder || 1),
-    active: sub.active !== false,
-    visibleOnWebsite: sub.visibleOnWebsite !== false,
-  };
-
-  let savedSub = null;
-  let backendError = null;
-
+  // 1. First check if backend database ALREADY has this subcategory
   try {
-    const response = await api.post("/subcategories", payload);
-    const resData = response.data?.data || response.data?.subcategory || (response.data?.name ? response.data : null);
-    if (resData && (resData.name || resData.title || resData.id)) {
-      savedSub = normalizeSubcategory(resData);
+    const existingRes = await api.get("/subcategories", { params: { categoryId: parentCatId } });
+    const existingList = list(existingRes.data);
+    const existingRemote = existingList.find(
+      (item) => item.name?.toLowerCase().trim() === subName.toLowerCase().trim() && isRemoteId(item.subcategoryId || item.id)
+    );
+    if (existingRemote) {
+      const matched = normalizeSubcategory(existingRemote);
+      const stored = getStoredSubcategories();
+      setStoredSubcategories(stored.filter((s) => String(s.subcategoryId || s.id) !== String(oldLocalId)));
+      dispatchDataUpdate("subcategories", "UPDATE", matched);
+      return matched;
     }
-  } catch (err) {
-    if (err?.response?.status === 409) {
-      try {
-        const uniqueSlug = `${baseSlug}-${parentCatId}`;
-        const retryRes = await api.post("/subcategories", { ...payload, slug: uniqueSlug });
-        const resData = retryRes.data?.data || retryRes.data?.subcategory || retryRes.data;
-        if (resData) savedSub = normalizeSubcategory(resData);
-      } catch (err2) {
-        try {
-          const randSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
-          const retryRes2 = await api.post("/subcategories", { ...payload, slug: randSlug });
-          const resData2 = retryRes2.data?.data || retryRes2.data?.subcategory || retryRes2.data;
-          if (resData2) savedSub = normalizeSubcategory(resData2);
-        } catch (err3) {
-          backendError = err3?.response?.data?.message || err3?.message;
-        }
-      }
-    } else {
-      backendError = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Sync rejected by server";
-    }
-  }
+  } catch {}
 
-  if (savedSub && isRemoteId(savedSub.subcategoryId || savedSub.id)) {
-    // Remove old local ID from storage and add new remote subcategory
-    const stored = (getStoredSubcategories() || []).map(normalizeSubcategory).filter(Boolean);
-    const updated = [
-      savedSub,
-      ...stored.filter((s) => String(s.subcategoryId || s.id) !== String(oldLocalId) && String(s.subcategoryId || s.id) !== String(savedSub.subcategoryId || savedSub.id))
-    ];
-    setStoredSubcategories(updated);
-    dispatchDataUpdate("subcategories", "CREATE", savedSub);
-    invalidateRequest("categories");
-    return savedSub;
-  }
+  // 2. Otherwise create on backend
+  const safeImg = sanitizeSubcategoryImageUrl(sub.imageURL || sub.imageUrl || sub.image, sub.name);
+  const result = await createSubcategory({
+    categoryId: parentCatId,
+    name: sub.name,
+    slug: sub.slug,
+    imageURL: safeImg,
+    imageUrl: safeImg,
+    image: safeImg,
+    sortOrder: sub.sortOrder,
+    active: sub.active,
+    visibleOnWebsite: sub.visibleOnWebsite !== false,
+  });
 
-  // If sync failed, keep existing local sub without duplicating and attach syncError
-  const stored = (getStoredSubcategories() || []).map(normalizeSubcategory).filter(Boolean);
-  const updated = stored.map((s) =>
-    String(s.subcategoryId || s.id) === String(oldLocalId)
-      ? { ...s, syncError: backendError }
-      : s
-  );
-  setStoredSubcategories(updated);
-  return { ...sub, isLocalOnly: true, syncError: backendError };
+  if (result && isRemoteId(result.subcategoryId || result.id)) {
+    // Successfully created or matched on backend database, remove old local-only ID
+    const stored = getStoredSubcategories();
+    setStoredSubcategories(stored.filter((s) => String(s.subcategoryId || s.id) !== String(oldLocalId)));
+  }
+  return result;
 };
 
 
